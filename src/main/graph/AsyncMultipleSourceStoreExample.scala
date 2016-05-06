@@ -7,7 +7,11 @@ import scala.concurrent.Future
 
 case class User(name: String)
 
-
+/**
+    * This code is simulation of reading
+    * multiple sources, process and store them parallel
+    * 
+    */
 object AsyncMultipleSourceStoreExample extends App {
 
   implicit val system = ActorSystem("NewJob")
@@ -22,6 +26,7 @@ object AsyncMultipleSourceStoreExample extends App {
     RunnableGraph.fromGraph(GraphDSL.create() { implicit builder =>
 
       val merge = builder.add(Merge[User](listOfCountries.length))
+      
       val flow = builder.add(Flow[User].mapAsync(parallelism = 10)(x =>  saveInformation(x)))
 
       Source.fromFuture(getUsers(listOfCountries.head)).mapConcat(identity) ~> merge ~> flow ~> Sink.foreachParallel(parallelism = 10)(println)
