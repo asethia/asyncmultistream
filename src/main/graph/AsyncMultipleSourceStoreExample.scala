@@ -5,14 +5,67 @@ import akka.stream.scaladsl._
 import akka.stream.{ActorMaterializer, ClosedShape}
 import scala.concurrent.Future
 
-case class User(name: String)
+
+trait BusinessOperations{
+
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  case class User(name: String, country: String)
+
+  /**
+    * get user information from database/other system;
+    * they might respond slow or fast depend on upon amount of
+    * data and system latency
+    *
+    * @param countryCode
+    * @return
+    */
+  def getUsers(countryCode: String): Future[List[User]] = {
+    countryCode match {
+      case "CountryA" => {
+        Future {
+          //this can be reading from database
+          List(User("CountryA User1", "CountryA"), User("US User2", "CountryA"))
+        }
+
+      }
+      case "CountryB" => {
+        Future {
+          //this can be reading from database
+          List(User("CountryB User1", "CountryB"), User("CountryB User2", "CountryB"), User("CountryB User3", "CountryB"))
+        }
+      }
+      case "CountryC" => {
+        Future {
+          //make this simulate slowness
+          Thread.sleep(1000)
+          //this can be reading from database
+          List(User("CountryC User1", "CountryC"), User("CountryC User2", "CountryC"))
+        }
+      }
+    }
+  }
+  /**
+    * save information what we received
+    * @param obj
+    * @return
+    */
+  def saveInformation(obj: User) = {
+    Future {
+      println("Saving db " + obj)
+      "Saved"
+    }
+  }
+
+}
+
 
 /**
     * This code is simulation of reading
     * multiple sources, process and store them parallel
     * 
     */
-object AsyncMultipleSourceStoreExample extends App {
+object AsyncMultipleSourceStoreExample extends App with BusinessOperations {
 
   implicit val system = ActorSystem("NewJob")
   implicit val dispacher = system.dispatcher
@@ -40,53 +93,7 @@ object AsyncMultipleSourceStoreExample extends App {
   }
 
 
-  /**
-    * get user information from database/other system;
-    * they might respond slow or fast depend on upon amount of
-    * data and system latency
-    * @param countryCode
-    * @return
-    */
-  def getUsers(countryCode: String): Future[List[User]] = {
-    countryCode match {
-      case "US" => {
-        Future {
-          println(s"now return for US, current time :${System.currentTimeMillis()}")
-          //this can be reading from database
-          List(User("US User1"), User("US User2"))
-        }
 
-      }
-      case "CANADA" => {
-        Future {
-          println(s"now return for India, current time: ${System.currentTimeMillis()}")
-          //this can be reading from database
-          List(User("Canada User1"), User("Canada User2"), User("Canada User3"))
-        }
-      }
-      case "INDIA" => {
-        Future {
-          //make this simulate slowness
-           Thread.sleep(1000)
-          println(s"now return for 100 time: ${System.currentTimeMillis()}")
-          //this can be reading from database
-          List(User("India User1"), User("India User2"))
-        }
-      }
-    }
-  }
-
-  /**
-    * save information what we received
-    * @param obj
-    * @return
-    */
-  def saveInformation(obj: User) = {
-    Future {
-      println("Saving db " + obj)
-      "Saved"
-    }
-  }
 
   createGraph.run()
 
