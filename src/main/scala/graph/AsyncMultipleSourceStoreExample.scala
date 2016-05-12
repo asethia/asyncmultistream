@@ -82,6 +82,8 @@ object AsyncMultipleSourceStoreExample extends App with BusinessOperations {
       
       val flow = builder.add(Flow[User].mapAsync(parallelism = 10)(x =>  saveInformation(x)))
 
+      //getusers retruns Future[List[User]], the mapConcat will flat the result
+      //it will transform each input a sequence of output elements that is falttened into the output stream
       Source.fromFuture(getUsers(listOfCountries.head)).mapConcat(identity) ~> merge ~> flow ~> Sink.foreachParallel(parallelism = 10)(println)
 
       for {
